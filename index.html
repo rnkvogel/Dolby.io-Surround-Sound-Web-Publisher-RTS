@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dolby.io Surround Publisher MultiOpus Debug DAW</title>
+  <link rel="icon" type="image/x-icon" href="/images/dolby.ico">
+  <script src="https://cdn.jsdelivr.net/npm/@millicast/sdk/dist/millicast.umd.min.js"></script>
+  <script src="surroundpublisher.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>Surround Publisher MultiOpus Debug DAW</h1>
+      <p>
+        Configurable for both 5.1 and 7.1
+      </p>
+    </section>
+
+    <div class="stack">
+      <section class="panel">
+        <div class="field-grid">
+          <div><label for="streamIdInput">Stream ID</label><input id="streamIdInput" placeholder="accountId/streamName" /></div>
+          <div><label for="tokenInput">Publishing token</label><input id="tokenInput" placeholder="Publishing token" /></div>
+          <div><label for="layoutSelect">Layout</label><select id="layoutSelect"><option value="5.1" selected>5.1</option><option value="7.1">7.1</option></select></div>
+          <div><label for="masterGainInput">Master monitor gain</label><input id="masterGainInput" type="number" min="0" max="2" step="0.1" value="1" /></div>
+          <div><label for="cleanupToggle">Echo / noise cleanup</label><select id="cleanupToggle"><option value="true" selected>On</option><option value="false">Off</option></select></div>
+          <div><label for="monitorToggle">Local surround monitor</label><select id="monitorToggle"><option value="false" selected>Off</option><option value="true">On</option></select></div>
+        </div>
+
+        <div class="button-row" style="margin-top:12px;">
+          <button id="refreshDevicesBtn" class="secondary">Refresh devices</button>
+          <button id="startBtn">Start surround publish</button>
+          <button id="stopBtn" class="danger" disabled>Stop</button>
+          <button id="resumeAudioBtn" class="secondary">Resume audio</button>
+          <button id="copyViewerBtn" class="secondary">Copy viewer link</button>
+          <button id="copyLogsBtn" class="secondary">Copy logs</button>
+        </div>
+
+        <div id="statusLine" class="status-line">Idle</div>
+
+        <div class="meta-grid">
+          <div class="meta-card"><span>Status</span><strong id="publishState">Idle</strong></div>
+          <div class="meta-card"><span>Layout</span><strong id="layoutState">5.1</strong></div>
+          <div class="meta-card"><span>Bus</span><strong id="busState">6 mono → 1 multichannel</strong></div>
+          <div class="meta-card"><span>Active inputs</span><strong id="activeInputCount">0 / 6</strong></div>
+          <div class="meta-card"><span>Viewer URL</span><strong id="viewerUrlState">Not ready</strong></div>
+          <div class="meta-card"><span>Munging</span><strong id="modeState">MultiOpus debug</strong></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="badge-row" style="margin-bottom:14px;">
+          <span class="subtle">Single row layout</span>
+          <span class="subtle">Vertical meters</span>
+          <span class="subtle">Vertical faders</span>
+          <span class="subtle">Mute before merge</span>
+          <span class="subtle">LFE low-pass option</span>
+        </div>
+        <div class="channel-wrap" style="margin-bottom:18px;">
+          <div id="channelGrid" class="channel-grid"></div>
+        </div>
+        <div class="map-box" style="margin-bottom:18px;">
+          <strong>Fixed surround bus mapping</strong>
+          <div id="mapGrid" class="map-grid"></div>
+          <p class="footer-note">
+            <span id="mappingNote" class="mono"></span>
+          </p>
+        </div>
+        <div class="spatial-box" style="margin-bottom:18px;">
+          <strong>Spatial balance puck</strong>
+          <p class="footer-note">Drag the puck. Double-click to recenter. Final level per strip = strip gain × mute state × spatial gain.</p>
+          <canvas id="spatialCanvas" width="960" height="360"></canvas>
+          <div class="spatial-controls">
+            <div>
+              <label for="spatialAmountInput">Spatial amount</label>
+              <input id="spatialAmountInput" type="number" min="0" max="1" step="0.05" value="1" />
+            </div>
+            <div>
+              <label for="spatialFloorInput">Minimum spatial gain</label>
+              <input id="spatialFloorInput" type="number" min="0" max="1" step="0.05" value="0" />
+            </div>
+            <div>
+              <label for="spatialPowerInput">Falloff power</label>
+              <input id="spatialPowerInput" type="number" min="0.5" max="4" step="0.1" value="1.6" />
+            </div>
+          </div>
+        </div>
+        <div class="spatial-box spatial-readout">
+          <strong>Spatial mix readout</strong>
+          <div class="meta-grid" style="margin-top:0;grid-template-columns:repeat(3,minmax(0,1fr));">
+            <div class="meta-card"><span>Puck X</span><strong id="spatialXState">0.00</strong></div>
+            <div class="meta-card"><span>Puck Y</span><strong id="spatialYState">0.00</strong></div>
+            <div class="meta-card"><span>Spatial mode</span><strong id="spatialModeState">Centered</strong></div>
+          </div>
+          <div id="spatialLegend" class="map-grid" style="margin-top:12px;"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <label for="sdpPreview">Last munged local SDP preview</label>
+        <textarea id="sdpPreview" readonly placeholder="SDP preview appears here after Start"></textarea>
+      </section>
+
+      <section class="panel">
+        <label for="debugLog">Debug log</label>
+        <textarea id="debugLog" readonly placeholder="Detailed logging appears here"></textarea>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

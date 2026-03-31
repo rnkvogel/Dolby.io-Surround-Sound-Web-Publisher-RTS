@@ -6,29 +6,19 @@
     logs: [],
     audioCount: 0,
     statsTimer: null,
+    visualizers: [],
   };
 
   function el(id) { return document.getElementById(id); }
-
-  function setText(id, text) {
-    const node = el(id);
-    if (node) node.textContent = text;
-  }
-
-  function setValue(id, value) {
-    const node = el(id);
-    if (node) node.value = value;
-  }
+  function setText(id, text) { const n = el(id); if (n) n.textContent = text; }
+  function setValue(id, value) { const n = el(id); if (n) n.value = value; }
 
   function log(message, data) {
     const stamp = new Date().toISOString();
     let line = `[${stamp}] ${message}`;
     if (typeof data !== 'undefined') {
-      try {
-        line += ' ' + (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
-      } catch (_) {
-        line += ' ' + String(data);
-      }
+      try { line += ' ' + (typeof data === 'string' ? data : JSON.stringify(data, null, 2)); }
+      catch (_) { line += ' ' + String(data); }
     }
     APP.logs.push(line);
     APP.logs = APP.logs.slice(-400);
@@ -47,6 +37,73 @@
     };
   }
 
+  function resizeCanvasToDisplaySize(canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(1, Math.floor(rect.width * window.devicePixelRatio));
+    const height = Math.max(1, Math.floor(rect.height * window.devicePixelRatio));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+  }
+
+  function makeVisualizer(stream, canvas, trackId) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+
+    const ctx = new Ctx();
+    const src = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.82;
+    src.connect(analyser);
+
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    const drawCtx = canvas.getContext('2d');
+    let raf = 0;
+
+    function draw() {
+      resizeCanvasToDisplaySize(canvas);
+      analyser.getByteFrequencyData(data);
+
+      const w = canvas.width;
+      const h = canvas.height;
+      drawCtx.clearRect(0, 0, w, h);
+      drawCtx.fillStyle = '#09101f';
+      drawCtx.fillRect(0, 0, w, h);
+
+      const barCount = data.length;
+      const barWidth = Math.max(1, Math.floor(w / barCount));
+      let x = 0;
+
+      for (let i = 0; i < barCount; i++) {
+        const v = data[i] / 255;
+        const barHeight = Math.max(2, Math.floor(v * h));
+        const grad = drawCtx.createLinearGradient(0, h, 0, h - barHeight);
+        grad.addColorStop(0, '#57f0c7');
+        grad.addColorStop(0.5, '#7b8dff');
+        grad.addColorStop(1, '#ff7dde');
+        drawCtx.fillStyle = grad;
+        drawCtx.fillRect(x, h - barHeight, barWidth - 1, barHeight);
+        x += barWidth;
+      }
+
+      raf = requestAnimationFrame(draw);
+    }
+
+    draw();
+    log('Visualizer started', { trackId });
+
+    return {
+      stop() {
+        if (raf) cancelAnimationFrame(raf);
+        try { src.disconnect(); } catch (_) {}
+        try { analyser.disconnect(); } catch (_) {}
+        try { ctx.close(); } catch (_) {}
+      }
+    };
+  }
+
   function addAudioCard(track, stream) {
     APP.audioCount += 1;
     setText('trackCount', String(APP.audioCount));
@@ -61,6 +118,9 @@
         <span class="pill">readyState: ${track.readyState}</span>
         <span class="pill">muted: ${track.muted}</span>
       </div>
+      <div class="visualizer-shell">
+        <canvas class="visualizer"></canvas>
+      </div>
     `;
 
     const audio = document.createElement('audio');
@@ -69,25 +129,18 @@
     audio.playsInline = true;
     audio.srcObject = stream;
 
-    audio.addEventListener('loadedmetadata', () => {
-      log('audio loadedmetadata', {
-        id: track.id,
-        sinkId: typeof audio.sinkId === 'string' ? audio.sinkId : 'default',
-      });
-    });
-
-    audio.addEventListener('play', () => log('audio play', { id: track.id }));
-    audio.addEventListener('error', () => log('audio error', audio.error ? { code: audio.error.code, message: audio.error.message } : 'unknown'));
-
     wrap.appendChild(audio);
     el('audioList').appendChild(wrap);
+
+    const canvas = wrap.querySelector('canvas.visualizer');
+    const viz = makeVisualizer(stream, canvas, track.id);
+    if (viz) APP.visualizers.push(viz);
   }
 
   async function pollStats() {
     try {
       const pc = APP.viewer?.webRTCPeer?.peer;
       if (!pc || !pc.getStats) return;
-
       const report = await pc.getStats();
       let inboundAudio = null;
       let codec = null;
@@ -103,14 +156,10 @@
       if (codec) {
         setText('codecState', codec.mimeType || codec.id || 'Unknown');
         log('receiver stats', {
-          inboundId: inboundAudio?.id,
           codec: codec.mimeType || codec.id,
           channels: codec.channels,
-          clockRate: codec.clockRate,
           sdpFmtpLine: codec.sdpFmtpLine,
           payloadType: codec.payloadType,
-          bytesReceived: inboundAudio?.bytesReceived,
-          packetsReceived: inboundAudio?.packetsReceived,
         });
       }
     } catch (error) {
@@ -120,7 +169,6 @@
 
   async function start() {
     if (APP.viewer) return;
-
     const params = new URLSearchParams(window.location.search);
     const streamIdRaw = el('streamIdInput').value || params.get('streamId') || '';
     const { streamId, accountId, streamName } = parseStreamId(streamIdRaw);
@@ -132,6 +180,8 @@
 
     el('audioList').innerHTML = '';
     APP.audioCount = 0;
+    APP.visualizers.forEach(v => { try { v.stop(); } catch (_) {} });
+    APP.visualizers = [];
     setText('trackCount', '0');
     setText('codecState', 'Unknown');
     setText('viewerState', 'Connecting');
@@ -149,21 +199,10 @@
 
     APP.viewer.on('track', (event) => {
       const track = event.track;
-      log('track event', {
-        kind: track.kind,
-        id: track.id,
-        readyState: track.readyState,
-        muted: track.muted,
-      });
-
+      log('track event', { kind: track.kind, id: track.id, readyState: track.readyState });
       if (track.kind === 'audio') {
-        const stream = new MediaStream([track]);
-        addAudioCard(track, stream);
+        addAudioCard(track, new MediaStream([track]));
       }
-    });
-
-    APP.viewer.on('broadcastEvent', (event) => {
-      log('broadcastEvent', event?.data || event);
     });
 
     APP.viewer.on('connectionStateChange', (state) => {
@@ -181,25 +220,10 @@
       await APP.viewer.connect();
       setText('viewerState', 'Connected');
       setText('statusLine', 'Connected');
-      log('viewer connected');
-
       el('startBtn').disabled = true;
       el('stopBtn').disabled = false;
-
       if (APP.statsTimer) clearInterval(APP.statsTimer);
       APP.statsTimer = setInterval(pollStats, 4000);
-
-      const pc = APP.viewer?.webRTCPeer?.peer;
-      if (pc) {
-        log('peer connection available', {
-          signalingState: pc.signalingState,
-          connectionState: pc.connectionState,
-          iceConnectionState: pc.iceConnectionState,
-        });
-        if (pc.remoteDescription?.sdp) {
-          log('remoteDescription SDP snippet', pc.remoteDescription.sdp.slice(0, 1800));
-        }
-      }
     } catch (error) {
       log('connect failed', error?.stack || String(error));
       setText('viewerState', 'Error');
@@ -213,10 +237,10 @@
       clearInterval(APP.statsTimer);
       APP.statsTimer = null;
     }
-
+    APP.visualizers.forEach(v => { try { v.stop(); } catch (_) {} });
+    APP.visualizers = [];
     try { await APP.viewer?.stop?.(); } catch (_) {}
     try { await APP.viewer?.disconnect?.(); } catch (_) {}
-
     APP.viewer = null;
     APP.audioCount = 0;
     el('audioList').innerHTML = '';
@@ -238,13 +262,10 @@
     const params = new URLSearchParams(window.location.search);
     const streamId = params.get('streamId') || '';
     if (streamId) el('streamIdInput').value = streamId;
-
     el('startBtn').addEventListener('click', start);
     el('stopBtn').addEventListener('click', stop);
     el('copyLogsBtn').addEventListener('click', copyLogs);
-
     const autoStart = (params.get('autoStart') || el('autoStartToggle').value || 'true').toLowerCase() === 'true';
-    log('viewer page loaded', { autoStart, streamId });
     if (autoStart && streamId) start();
   }
 

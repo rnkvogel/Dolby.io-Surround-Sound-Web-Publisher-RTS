@@ -4,10 +4,12 @@ Dolby.io OptiView MultiOpus Audio Viewer (Debug + Visualizer)
 
 Lightweight audio-only viewer for Dolby.io / Millicast streams with MultiOpus (5.1 / 7.1) support.
 Includes per-track audio playback, real-time visualizers, and deep WebRTC debug logging.
-
+<img width="1928" height="1015" alt="Screenshot 2026-03-31 at 1 35 21 PM" src="https://github.com/user-attachments/assets/5e0d8714-373a-443e-8c7e-2b7352688087" />
 Features
 🎧 MultiOpus audio playback (5.1 / 7.1)
 📊 Real-time audio visualizer per track
+🎧 Audio movement
+<img width="1944" height="859" alt="Screenshot 2026-03-31 at 1 35 31 PM" src="https://github.com/user-attachments/assets/956d121b-5984-4116-8209-e652a2e1c7db" />
 🔍 WebRTC debug logging (tracks, SDP, stats)
 📡 Direct Millicast Viewer connection (no custom signaling needed)
 🧪 Designed for validation using chrome://webrtc-internals

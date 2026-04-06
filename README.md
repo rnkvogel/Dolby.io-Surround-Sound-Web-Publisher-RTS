@@ -136,12 +136,4 @@ Next Enhancements (Optional)
 🎚 Output routing (L/R/C/LFE mapping)
 🧠 Spatial audio rendering
 
-If you want next step:
 
-👉 I can turn this into a full surround monitoring console (DAW-style) with:
-
-6–8 vertical meters
-per-channel routing
-real speaker mapping (not just visualization)
-
-That’s where it gets really powerful.

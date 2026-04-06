@@ -118,7 +118,6 @@ Some browsers throttle AudioContext until interaction
 ❌ JS not loading (404)
 
 Ensure:
-
 viewer.html
 viewer.js
 
@@ -130,7 +129,7 @@ Designed to validate:
 MultiOpus ingestion
 Channel count
 Codec negotiation
-Next Enhancements (Optional)
+Next Enhancements for viewer may include.
 🔊 Channel splitter (true surround output)
 🎛 Per-channel meters (DAW-style)
 🎚 Output routing (L/R/C/LFE mapping)

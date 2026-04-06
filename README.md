@@ -1,5 +1,5 @@
-Dolby.io Real Time Streaming MultiOpus Audio Publisher for Surround Sound. Includes Audio Only Player with Visualizer.
-(Debug + Visualizer)
+Dolby.io Real Time Streaming MultiOpus Audio Publisher for Surround Sound (Debug + Visualizer). Includes Audio Only Player with Visualizer.
+Connect a DAW using a virtual output plugin to create truly immersive audio experiences. 
 
 [DEMO THIS](https://rnkvogel.github.io/Dolby.io-Surround-Sound-Web-Publisher-RTS/)
 
@@ -31,11 +31,8 @@ Audio playback (no mic required)
 Autoplay must be allowed (user interaction required)
 Usage
 1. Open the Viewer
-viewer.html?streamId=YOUR_ACCOUNT/YOUR_STREAM
+Example: [https://viewer.html?streamId=streamAccountId/streamName](https://viewer.millicast.com/?streamId=k9Mwad/multiview)
 
-Example:
-
-viewer.html?streamId=LZsuF8/metadata
 2. Click Start
 Connects to Dolby.io via the Millicast SDK
 Subscribes to the stream
@@ -74,12 +71,10 @@ If you see:
 codec: opus
 stereo=1
 
-➡️ Browser is downmixing → MultiOpus not active
-
 Architecture
-Millicast Stream
+Dolby.io/Millicast Stream
       ↓
-millicast.View()
+Dolby.io/millicast.View()
       ↓
 WebRTC Track Event
       ↓
@@ -97,8 +92,6 @@ This viewer does NOT:
 Split channels
 Route to speakers
 
-➡️ Next step is WebAudio channel splitting (can be added)
-
 Troubleshooting
 ❌ No audio
 Click Start (required for autoplay)
@@ -108,7 +101,6 @@ Verify stream is live
 Confirm publisher SDP munging
 
 Verify:
-
 a=rtpmap:111 multiopus/48000/6
 ❌ Visualizer not moving
 Check:
@@ -120,7 +112,6 @@ Some browsers throttle AudioContext until interaction
 Ensure:
 viewer.html
 viewer.js
-
 Are in the same directory
 
 Notes
@@ -129,7 +120,9 @@ Designed to validate:
 MultiOpus ingestion
 Channel count
 Codec negotiation
-Next Enhancements for viewer may include.
+
+Enhancements for viewer may include.
+
 🔊 Channel splitter (true surround output)
 🎛 Per-channel meters (DAW-style)
 🎚 Output routing (L/R/C/LFE mapping)

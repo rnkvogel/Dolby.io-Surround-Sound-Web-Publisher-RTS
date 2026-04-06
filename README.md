@@ -1,4 +1,5 @@
-Dolby.io OptiView MultiOpus Audio Viewer (Debug + Visualizer)
+Dolby.io Real Time Streaming MultiOpus Audio Publisher for Surround Sound. Includes Audio Only Player with Visulizer.
+(Debug + Visualizer)
 
 [DEMO THIS](https://rnkvogel.github.io/Dolby.io-Surround-Sound-Web-Publisher-RTS/)
 

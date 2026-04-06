@@ -1,4 +1,4 @@
-Dolby.io Real Time Streaming MultiOpus Audio Publisher for Surround Sound. Includes Audio Only Player with Visulizer.
+Dolby.io Real Time Streaming MultiOpus Audio Publisher for Surround Sound. Includes Audio Only Player with Visualizer.
 (Debug + Visualizer)
 
 [DEMO THIS](https://rnkvogel.github.io/Dolby.io-Surround-Sound-Web-Publisher-RTS/)
